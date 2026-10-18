@@ -9,9 +9,13 @@
 # modules, and a fingerprint of only the config it reads -- so editing a scoring
 # weight rebuilds ranking onward without redoing the slow prediction stage.
 
-PY       := .venv/bin/python
-NEOAG    := $(PY) -m neoag
-PYTHON311 ?= /opt/homebrew/bin/python3.11
+# Use the project virtualenv when there is one, otherwise whatever python is on
+# PATH. CI installs the package into the runner's own interpreter and has no
+# .venv, so hardcoding one breaks every target there.
+PY        := $(if $(wildcard .venv/bin/python),.venv/bin/python,python3)
+NEOAG     := $(PY) -m neoag
+MHCFLURRY := $(if $(wildcard .venv/bin/mhcflurry),.venv/bin/mhcflurry,mhcflurry)
+PYTHON311 ?= python3.11
 # `make synthetic` is a config switch, not a recursive dispatch: recursing would
 # re-parse this file with a different config and rewrite every stage fingerprint.
 ifneq ($(filter synthetic,$(MAKECMDGOALS)),)
@@ -43,13 +47,13 @@ synthetic: site/data/manifest.json figures/km_survival.png ## Rebuild everything
 
 setup: ## Create the virtualenv and install everything
 	$(PYTHON311) -m venv .venv
-	$(PY) -m pip install --upgrade pip
-	$(PY) -m pip install -e ".[dev,predict,construct,video]"
+	.venv/bin/python -m pip install --upgrade pip
+	.venv/bin/python -m pip install -e ".[dev,predict,construct,video]"
 	$(MAKE) models
 
 models: ## Download the MHCflurry presentation models (~160 MB, one time)
 	@mkdir -p data/cache/mhcflurry
-	.venv/bin/mhcflurry downloads fetch models_class1_presentation --release $(MHCFLURRY_RELEASE)
+	$(MHCFLURRY) downloads fetch models_class1_presentation --release $(MHCFLURRY_RELEASE)
 
 # -- config fingerprints ---------------------------------------------------- #
 # Refreshed at parse time, before make evaluates the dependency graph, and
@@ -132,10 +136,10 @@ figures-check: ## Verify a figure rebuild is byte-identical to what is committed
 	 [ $$ok -eq 1 ] && echo "all figures reproduce byte-for-byte"
 
 lint:
-	.venv/bin/ruff check src tests scripts
+	$(PY) -m ruff check src tests scripts
 
 typecheck:
-	.venv/bin/mypy src/neoag
+	$(PY) -m mypy src/neoag
 
 # -- cleaning --------------------------------------------------------------- #
 clean-interim: ## Remove generated artifacts, keep caches (fast offline rebuild)

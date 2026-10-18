@@ -63,6 +63,16 @@ class TestManifest:
         for expected in ("hla type is assumed", "matched normal", "immunogenicity"):
             assert expected in joined
 
+    def test_build_date_does_not_churn_the_file(self):
+        """A second-resolution timestamp would dirty site/data on every rebuild."""
+        import json
+
+        from neoag.paths import Paths
+
+        committed = json.loads((Paths().root / "site" / "data" / "manifest.json").read_text())
+        assert "generated_utc" not in committed
+        assert len(committed["generated_date"]) == 10
+
     def test_disclaims_approval(self, built):
         m = manifest(built["settings"], built["mutations"], built["annotations"],
                      built["primary"], built["construct"], "stub-1")

@@ -56,7 +56,9 @@ def manifest(
     return {
         "schema_version": SCHEMA_VERSION,
         "neoag_version": __version__,
-        "generated_utc": Provenance.now_utc(),
+        # Date, not a full timestamp: the page only shows the date, and a
+        # second-resolution value would dirty this file on every rebuild.
+        "generated_date": Provenance.now_utc()[:10],
         "sample": {
             "id": mutations.sample_id,
             "study": mutations.study_id,

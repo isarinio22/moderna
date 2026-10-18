@@ -663,7 +663,7 @@ function provenance() {
     `Built from sample ${m.sample.id} (${m.sample.study}, ${m.sample.genome_build}) using `
     + `${m.predictor.name}. ${m.counts.mutations_validated} mutations verified against real protein `
     + `sequences, ${m.counts.candidates.toLocaleString()} fragments scored, ${m.counts.selected} selected. `
-    + `Generated ${m.generated_utc.slice(0, 10)}.`;
+    + `Generated ${m.generated_date}.`;
 }
 
 async function boot() {
