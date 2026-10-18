@@ -1,0 +1,66 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "neoag"
+version = "0.1.0"
+description = "Educational explainer: how a personalized neoantigen therapy is designed, and what the evidence for one actually shows"
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = "==3.11.*"
+dependencies = [
+    "pydantic>=2.9,<3",
+    "requests>=2.32,<3",
+    "pyyaml>=6.0,<7",
+    "numpy>=1.26,<3",
+    "pandas>=2.2,<3",
+    "pyarrow>=16",
+    "matplotlib==3.11.2",
+    "lifelines>=0.30.3,<0.31",
+    "scipy>=1.13",
+]
+
+[project.optional-dependencies]
+# Heavy: pulls torch (~555 MB on linux-x64). The pipeline runs end-to-end without it
+# using the deterministic StubPredictor.
+predict = ["mhcflurry>=2.3,<2.4"]
+# Codon optimisation. Falls back to a pure-python frequency table if absent.
+construct = ["dnachisel>=3.2.16,<4", "python_codon_tables>=0.1.18"]
+video = ["imageio-ffmpeg>=0.6,<0.7"]
+dev = [
+    "pytest>=8.3",
+    "pytest-cov>=5.0",
+    "hypothesis>=6.112",
+    "ruff>=0.6",
+    "mypy>=1.11",
+]
+
+[project.scripts]
+neoag = "neoag.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-m 'not network and not models' --strict-markers"
+markers = [
+    "network: hits live public APIs; deselected by default",
+    "models: requires the ~160 MB MHCflurry model download",
+    "slow: takes more than a few seconds",
+    "ci_only: byte-exact assertions valid only in the pinned CI image",
+]
+filterwarnings = ["error::DeprecationWarning:neoag.*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM", "RUF"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+ignore_missing_imports = true
