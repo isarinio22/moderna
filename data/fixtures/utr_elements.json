@@ -1,0 +1,29 @@
+{
+  "_note": "Real human untranslated regions from Ensembl GRCh37, used as labelled blocks in the conceptual construct. Regenerate with scripts/fetch_utrs.py. Ensembl data are available under the Apache 2.0 licence; the underlying genome sequence is public domain.",
+  "elements": {
+    "hba1_utr5": {
+      "assembly": "GRCh37",
+      "description": "Human alpha-globin 5' untranslated region.",
+      "fetched_utc": "2026-10-18T19:59:41+00:00",
+      "gene_symbol": "HBA1",
+      "kind": "utr5",
+      "length": 37,
+      "sequence": "ACTCTTCTGGTCCCCACAGACTCAGAGAGAACCCACC",
+      "sha256": "ba31757fbab6962ff3e55aeb18fcf2b10b31bb3e80f008f3aff4acf0d6bd54d9",
+      "source": "https://grch37.rest.ensembl.org/sequence/id/ENST00000320868?type=cdna",
+      "transcript_id": "ENST00000320868"
+    },
+    "hbb_utr3": {
+      "assembly": "GRCh37",
+      "description": "Human beta-globin 3' untranslated region.",
+      "fetched_utc": "2026-10-18T19:59:43+00:00",
+      "gene_symbol": "HBB",
+      "kind": "utr3",
+      "length": 134,
+      "sequence": "GCTCGCTTTCTTGCTGTCCAATTTCTATTAAAGGTTCCTTTGTTCCCTAAGTCCAACTACTAAACTGGGGGATATTATGAAGGGCCTTGAGCATCTGGATTCTGCCTAATAAAAAACATTTATTTTCATTGCAA",
+      "sha256": "377e700600d9891b0fddf4b3fbaf9251fc5b743f799d9e451026a4141b87783a",
+      "source": "https://grch37.rest.ensembl.org/sequence/id/ENST00000335295?type=cdna",
+      "transcript_id": "ENST00000335295"
+    }
+  }
+}

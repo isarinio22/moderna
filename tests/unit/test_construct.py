@@ -114,10 +114,22 @@ class TestAssembly:
         coding = "".join(b.sequence for b in blocks if b.kind in ("epitope", "linker"))
         assert translate(coding) == cds_aa
 
-    def test_utrs_are_labelled_as_illustrative(self, assembled):
+    def test_utrs_are_real_sequences_with_provenance(self, assembled):
+        """Real globin UTRs, each labelled with the transcript it came from."""
         _, blocks, _, _, _ = assembled
-        for block in (b for b in blocks if b.kind == "utr"):
-            assert "NOT a real therapeutic sequence" in block.note
+        utrs = [b for b in blocks if b.kind == "utr"]
+        assert len(utrs) == 2
+        for block in utrs:
+            assert "ENST" in block.note
+            assert "GRCh37" in block.note
+            assert set(block.sequence) <= set("ACGT")
+
+    def test_three_prime_utr_labels_the_polyadenylation_signal(self, assembled):
+        """The poly-A tail is placed, not merely appended -- AATAAA is where."""
+        _, blocks, _, _, _ = assembled
+        tail_utr = [b for b in blocks if b.kind == "utr"][-1]
+        assert "AATAAA" in tail_utr.sequence
+        assert "polyadenylation signal" in tail_utr.note
 
 
 def test_build_protein_joins_with_linkers():

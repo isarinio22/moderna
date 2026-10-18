@@ -5,7 +5,14 @@ from __future__ import annotations
 from neoag.config import ConstructCfg
 from neoag.models import ConstructBlock, JunctionReport, ScoredEpitope
 from neoag.pipeline.construct.codon import optimize_cds
-from neoag.pipeline.construct.elements import CAP_NOTE, KOZAK, MODIFIED_BASE_NOTE, STOP, UTR3, UTR5
+from neoag.pipeline.construct.elements import (
+    CAP_NOTE,
+    KOZAK,
+    MODIFIED_BASE_NOTE,
+    STOP,
+    utr3,
+    utr5,
+)
 from neoag.util.seq import gc_content
 
 
@@ -30,8 +37,8 @@ def assemble(
     codon = optimize_cds(cds_aa, cfg.codon, seed)
     cds = codon.cds
 
-    utr5 = UTR5[cfg.utr5]
-    utr3 = UTR3[cfg.utr3]
+    five_prime = utr5(cfg.utr5)
+    three_prime = utr3(cfg.utr3)
     polya = "A" * cfg.polya_length
 
     blocks: list[ConstructBlock] = []
@@ -52,7 +59,7 @@ def assemble(
 
     # The cap is a chemical modification, so it is a zero-length labelled block.
     add("5' cap", "cap", "", CAP_NOTE)
-    add(utr5.name, "utr", utr5.sequence, utr5.note)
+    add(five_prime.name, "utr", five_prime.sequence, five_prime.note)
     add("Kozak", "kozak", KOZAK,
         "Consensus sequence that helps the ribosome start in the right place.")
 
@@ -81,7 +88,7 @@ def assemble(
             offset += lnt
 
     add("stop", "stop", STOP, "Two stop codons in a row.")
-    add(utr3.name, "utr", utr3.sequence, utr3.note)
+    add(three_prime.name, "utr", three_prime.sequence, three_prime.note)
     add("poly-A tail", "polya", polya,
         f"{cfg.polya_length} adenines. Protects the message from being chewed up too quickly.")
 
