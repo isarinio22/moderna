@@ -27,3 +27,6 @@ linkedin/*.gif
 
 # OS
 .DS_Store
+
+# Per-run build state (stage config fingerprints)
+build/
