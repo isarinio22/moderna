@@ -1,0 +1,9 @@
+# Overlay on default.yaml: fully offline run against the committed fixture.
+# Used by CI and by anyone who wants the pipeline to work from a fresh clone
+# with no network and no model download.
+run:
+  offline_mode: offline
+  predictor: stub
+source:
+  use_synthetic: true
+  sample_id: SYNTHETIC-MEL-001

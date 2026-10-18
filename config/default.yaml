@@ -1,0 +1,99 @@
+# Default configuration: the real TCGA melanoma sample.
+# Run `make synthetic` to use the committed offline fixture instead.
+schema_version: "1.0.0"
+
+run:
+  seed: 1337
+  offline_mode: auto       # auto = cache first, network on miss | offline | refresh
+  predictor: mhcflurry     # mhcflurry | stub (stub needs no model download)
+  max_mismatch_fraction: 0.25
+
+source:
+  study_id: skcm_tcga_pan_can_atlas_2018
+  sample_id: TCGA-3N-A9WB-06
+  genome_build: GRCh37
+  use_synthetic: false
+  max_mutations: 150       # melanoma is the highest-mutation-burden tumour type
+  mutation_types: [Missense_Mutation]
+  variant_types: [SNP]
+
+hla:
+  # ------------------------------------------------------------------------
+  # THIS IS AN ASSUMPTION, NOT DATA.
+  # cBioPortal publishes no HLA type for TCGA samples. Which fragments a person
+  # can display depends entirely on their HLA type, so the selection below would
+  # be different for a different person with the identical tumour. Running
+  # several panels is how this project makes that dependence visible instead of
+  # hiding it behind one arbitrary choice.
+  # Alleles are commonly observed class I alleles in the named populations
+  # (see the Allele Frequency Net Database, allelefrequencies.net). They are
+  # illustrative, not a validated population-representative sample.
+  # ------------------------------------------------------------------------
+  primary_panel: common_european
+  assumption_note: >-
+    HLA type is assumed, not measured. The public tumour data carries no HLA
+    typing, so these are illustrative panels of commonly observed class I
+    alleles. Real neoantigen selection uses the patient's own sequenced HLA
+    type, and a different HLA type would select different peptides from the
+    identical tumour.
+  panels:
+    common_european:
+      ["HLA-A*02:01", "HLA-A*01:01", "HLA-B*07:02", "HLA-B*08:01", "HLA-C*07:01", "HLA-C*07:02"]
+    common_east_asian:
+      ["HLA-A*24:02", "HLA-A*11:01", "HLA-B*40:01", "HLA-B*46:01", "HLA-C*01:02", "HLA-C*07:02"]
+    common_african:
+      ["HLA-A*23:01", "HLA-A*30:01", "HLA-B*53:01", "HLA-B*58:02", "HLA-C*04:01", "HLA-C*06:02"]
+
+peptides:
+  lengths: [8, 9, 10, 11]
+  exclude_proximal_mutations: true
+
+scoring:
+  # Must sum to 1.0; validated at load.
+  weights:
+    presentation: 0.40     # will the fragment be displayed at all
+    agretopicity: 0.25     # is the mutant displayed better than the wild type
+    expression: 0.25       # is the gene actually switched on in this tumour
+    quality: 0.10          # is the peptide awkward to make or likely modified
+  agretopicity:
+    log10_clip: [-1.0, 2.0]
+    missing_wt_score: 0.5
+  expression:
+    missing_value_score: 0.5
+  quality:
+    cysteine_per_residue: 0.15
+    n_glycosylation_motif: 0.10
+    homopolymer_run_ge4: 0.10
+  gates:
+    max_presentation_percentile: 2.0
+    max_affinity_nm: 500.0
+
+selection:
+  max_epitopes: 34         # mirrors the real vaccine design
+  max_per_mutation: 1      # 34 targets, not 34 views of one target
+  max_per_gene: 2
+
+construct:
+  disclaimer: >-
+    CONCEPTUAL AND EDUCATIONAL ONLY. This is a teaching illustration of how
+    epitopes would be arranged in an mRNA construct. It is not a manufacturable
+    sequence, it has not been validated in any way, and it must not be used for
+    any laboratory or clinical purpose.
+  linker: GPGPG
+  junction_screen_lengths: [9, 10]
+  junction_ordering: greedy
+  utr5: hba1
+  utr3: hbb
+  polya_length: 100
+  codon:
+    species: h_sapiens
+    table: h_sapiens_9606
+    method: use_best_codon
+    # Deliberately a wide band. Every codon for glycine and proline is GC-rich
+    # (GGN and CCN), so a GPGPG linker cannot be written below about 67% GC in
+    # its own window -- a narrower target is not merely hard, it is arithmetically
+    # unreachable. Therapeutic mRNA is commonly GC-rich in any case.
+    gc_target: [0.40, 0.70]
+    gc_window: 50
+    avoid_patterns: ["AAAAAAAA", "TTTTTTTT"]
+    timeout_seconds: 120
