@@ -162,6 +162,59 @@ def cmd_run_all(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_export(args: argparse.Namespace) -> int:
+    """Write every JSON payload the website reads."""
+    from neoag.export import export_all
+
+    settings, paths = _settings(args), Paths()
+    outdir = Path(args.outdir) if args.outdir else paths.root / "site" / "data"
+
+    mutations = read_json(paths.mutations, MutationSet)
+    annotations = read_json(paths.annotated, AnnotationSet)
+    pairs = read_jsonl(paths.peptides, PeptidePair)
+    predictions = pd.read_parquet(paths.predictions)
+    construct = read_json(paths.construct, MRNAConstruct)
+
+    # Rank once per HLA panel. Predictions already cover every allele, so this is
+    # cheap, and it is what lets the site show how the chosen set depends on who
+    # the patient is.
+    rankings = {
+        name: s5_rank.run(settings, pairs, predictions, annotations, name)
+        for name in settings.hla.panels
+    }
+
+    predictor_name = "unknown"
+    meta = Path(str(paths.predictions) + ".meta.json")
+    if meta.exists():
+        for note in json.loads(meta.read_text()).get("notes", []):
+            if note.startswith("predictor="):
+                predictor_name = note.split("=", 1)[1]
+
+    sizes = export_all(
+        outdir, settings, mutations, annotations, rankings, construct,
+        predictions, predictor_name,
+    )
+    total = sum(sizes.values())
+    for name, size in sorted(sizes.items()):
+        print(f"  {name:<18} {size / 1024:>8.1f} KB")
+    print(f"  {'total':<18} {total / 1024:>8.1f} KB -> {outdir.relative_to(paths.root)}")
+    return 0
+
+
+def cmd_figures(args: argparse.Namespace) -> int:
+    """Render the static PNG version of every interactive figure."""
+    from neoag.figures.build import build_all
+
+    paths = Paths()
+    data_dir = Path(args.data) if args.data else paths.root / "site" / "data"
+    outdir = Path(args.outdir) if args.outdir else paths.figures
+    written = build_all(data_dir, outdir, args.only)
+    for name, path in sorted(written.items()):
+        print(f"  {name:<22} {path.stat().st_size / 1024:>7.1f} KB  {path.name}")
+    print(f"  {len(written)} figures -> {outdir.relative_to(paths.root)}")
+    return 0
+
+
 def cmd_evidence(args: argparse.Namespace) -> int:
     """Reconstruct the trial data, refit it, and report the discrepancies."""
     from neoag.evidence.derived import (
@@ -305,6 +358,16 @@ def build_parser() -> argparse.ArgumentParser:
     p_rank = sub.add_parser("rank", help="stage 5: score, rank and select")
     p_rank.add_argument("--panel", default=None, help="HLA panel name (default: primary)")
     p_rank.set_defaults(func=cmd_rank)
+
+    p_figs = sub.add_parser("figures", help="render static PNG figures")
+    p_figs.add_argument("--data", default=None)
+    p_figs.add_argument("--outdir", default=None)
+    p_figs.add_argument("--only", default=None)
+    p_figs.set_defaults(func=cmd_figures)
+
+    p_export = sub.add_parser("export", help="write the website's JSON payloads")
+    p_export.add_argument("--outdir", default=None)
+    p_export.set_defaults(func=cmd_export)
 
     p_stamp = sub.add_parser("config-stamp", help="write one stage's config fingerprint")
     p_stamp.add_argument("--stage", required=True)

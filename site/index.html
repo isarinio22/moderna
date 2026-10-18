@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Your Tumor, Your Vaccine</title>
+<meta name="description" content="How a personalized cancer vaccine is designed, and what the evidence for one actually shows. An educational explainer with reproducible code.">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="style.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧬</text></svg>">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<button id="theme-toggle" type="button" aria-label="Switch between light and dark">◐</button>
+<div id="tip" role="tooltip" aria-hidden="true"></div>
+
+<main id="main">
+
+<!-- ====================== HERO ====================== -->
+<section class="hero">
+  <div class="wrap">
+    <p class="eyebrow">Educational explainer</p>
+    <h1>Your tumor, <span class="hl">your vaccine</span></h1>
+    <p class="lead">
+      Every cancer rewrites its own DNA as it grows. Those typos exist nowhere else in the body &mdash;
+      which makes them the one thing that is unmistakably <em>tumor</em> and not <em>you</em>.
+      This is how you turn them into a vaccine, and what the evidence so far actually shows.
+    </p>
+    <div class="badge-row">
+      <span class="badge">Takes about 2 minutes</span>
+      <span class="badge" id="badge-source">Real tumor data</span>
+      <span class="badge warn">Not medical advice</span>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== THE IDEA ====================== -->
+<section>
+  <div class="wrap wide">
+    <p class="eyebrow">The idea</p>
+    <h2>Cancer cells carry a fingerprint no healthy cell has</h2>
+    <p>
+      As a tumor grows it copies its DNA over and over, and it makes mistakes. Most of those mistakes
+      do nothing. Some change the shape of a protein. Those changed proteins are called
+      <button class="term" data-term="neoantigen">neoantigens</button>, and they are the only thing
+      that marks a cancer cell as foreign.
+    </p>
+    <p>
+      Your immune system already patrols for foreign things. The problem is that it has never been
+      shown what to look for, and the tumor is actively telling it to stand down. A personalized
+      vaccine fixes the first problem. A second drug fixes the second.
+    </p>
+
+    <figure>
+      <div id="fig-concept"></div>
+      <figcaption id="cap-concept"></figcaption>
+    </figure>
+  </div>
+</section>
+
+<!-- ====================== WANTED POSTERS ====================== -->
+<section class="band">
+  <div class="wrap wide">
+    <p class="eyebrow">Step one</p>
+    <h2>Turning a typo into a wanted poster</h2>
+    <p>
+      Every cell constantly shreds its own proteins into short fragments and holds them up on its
+      surface, like a shop displaying samples of everything inside. Passing
+      <button class="term" data-term="tcell">T&nbsp;cells</button> inspect those samples. If a
+      fragment looks wrong, the cell gets destroyed.
+    </p>
+    <p>
+      So a vaccine's job is to pick the fragments that span a mutation &mdash; the ones that look
+      wrong &mdash; and teach the immune system their faces in advance.
+    </p>
+
+    <figure>
+      <div id="fig-window"></div>
+      <figcaption id="cap-window"></figcaption>
+    </figure>
+    <div class="controls" id="window-controls"></div>
+  </div>
+</section>
+
+<!-- ====================== HLA ====================== -->
+<section>
+  <div class="wrap wide">
+    <p class="eyebrow">Why it has to be personal</p>
+    <h2>Your body can only display certain fragments</h2>
+    <p>
+      The molecules that hold fragments up for inspection are called
+      <button class="term" data-term="hla">HLA</button>, and yours are different from almost
+      everyone else's. An HLA molecule is a particular shape, and it can only grip fragments that
+      fit it. A mutation nobody in your body can display is useless as a target, however dramatic
+      it looks in the DNA.
+    </p>
+    <p>
+      So the vaccine depends on two things: which mutations your tumor has, <em>and</em> which
+      fragments your body can show. Here is the same tumor run against three different sets of
+      common HLA types.
+    </p>
+
+    <div class="stat-row" id="panel-stats"></div>
+    <figure>
+      <div id="fig-panels"></div>
+      <figcaption id="cap-panels"></figcaption>
+    </figure>
+    <div class="note" id="hla-assumption"></div>
+  </div>
+</section>
+
+<!-- ====================== FUNNEL ====================== -->
+<section class="band">
+  <div class="wrap wide">
+    <p class="eyebrow">Step two</p>
+    <h2>From every mutation down to thirty-four</h2>
+    <p>
+      Most candidates do not survive. This is the real narrowing, run on a public, de-identified
+      melanoma sample. Hover or tap any step to see exactly what was discarded and why &mdash; the
+      discards are the honest part.
+    </p>
+    <div id="funnel"></div>
+  </div>
+</section>
+
+<!-- ====================== RANKING ====================== -->
+<section>
+  <div class="wrap wide">
+    <p class="eyebrow">Step three</p>
+    <h2>Ranking what is left</h2>
+    <p>
+      Four questions decide the order. Move the sliders to weigh them differently and the ranking
+      updates immediately &mdash; it is the same arithmetic the pipeline runs.
+    </p>
+    <div id="weights"></div>
+    <figure>
+      <div class="scroll-x"><table id="epitope-table"></table></div>
+      <figcaption id="cap-rank"></figcaption>
+    </figure>
+  </div>
+</section>
+
+<!-- ====================== CONSTRUCT ====================== -->
+<section class="band">
+  <div class="wrap wide">
+    <p class="eyebrow">Step four</p>
+    <h2>Writing them into one message</h2>
+    <p>
+      The chosen fragments get strung together into a single strand of
+      <button class="term" data-term="mrna">mRNA</button> &mdash; an instruction sheet. Your own
+      cells read it, build the fragments, and display them. The immune system learns the faces
+      without anyone ever having to inject a tumor.
+    </p>
+    <figure>
+      <div class="blocks" id="construct-map"></div>
+      <figcaption id="cap-construct"></figcaption>
+    </figure>
+    <div class="card" id="block-detail"></div>
+    <div class="note" id="construct-disclaimer"></div>
+  </div>
+</section>
+
+<!-- ====================== EVIDENCE ====================== -->
+<section>
+  <div class="wrap wide">
+    <p class="eyebrow">The part that matters</p>
+    <h2>Does it actually work?</h2>
+    <p>
+      A trial called KEYNOTE-942 gave 157 people with melanoma either this vaccine plus an antibody
+      called pembrolizumab, or the antibody alone, after surgery removed their tumors. Then it
+      waited five years to see who had a recurrence.
+    </p>
+
+    <figure>
+      <div id="fig-km"></div>
+      <figcaption id="cap-km"></figcaption>
+    </figure>
+    <ul class="legend" id="km-legend"></ul>
+    <div class="scroll-x"><table id="at-risk"></table></div>
+
+    <h3 style="margin-top:2.5rem">Out of 100 people like this&hellip;</h3>
+    <p>
+      Percentages are slippery. Here is the same result as people. Each figure is one person;
+      coloured figures are still cancer-free at the timepoint you choose.
+    </p>
+    <div class="controls" id="landmark-controls"></div>
+    <div id="icon-arrays"></div>
+    <div class="note" id="nnt-note"></div>
+  </div>
+</section>
+
+<!-- ====================== HONESTY ====================== -->
+<section class="band">
+  <div class="wrap">
+    <p class="eyebrow">What this does and does not prove</p>
+    <h2>The caveats are the point</h2>
+    <p>
+      This is a promising result from a small trial, and it is not proof. Every one of these is a
+      real limitation of the evidence, not a disclaimer bolted on afterwards.
+    </p>
+    <div id="explainers"></div>
+    <div class="card" style="margin-top:2rem;border-left:4px solid var(--accent)">
+      <h3>The bottom line</h3>
+      <p id="verdict" style="margin:0"></p>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== REPRODUCIBILITY ====================== -->
+<section>
+  <div class="wrap wide">
+    <p class="eyebrow">Check it yourself</p>
+    <h2>Every number here is reproducible</h2>
+    <p>
+      The patient-level data behind that curve was rebuilt from the trial's own published summary
+      table. Here is how closely the reconstruction lands on what was actually published &mdash;
+      including where it does not.
+    </p>
+    <div class="scroll-x"><table id="validation"></table></div>
+    <p id="sensitivity-note" style="margin-top:1.25rem"></p>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap wide">
+    <p id="footer-provenance"></p>
+    <p>
+      <strong>Educational project. Not medical advice. Not affiliated with Moderna or Merck.</strong>
+      mRNA-4157 / V940 (intismeran autogene) is investigational and is not approved by any regulator
+      anywhere. KEYTRUDA is a registered trademark of Merck Sharp &amp; Dohme LLC.
+    </p>
+    <p>
+      Tumor data from the <a href="https://www.cancer.gov/tcga">TCGA Research Network</a> via
+      <a href="https://www.cbioportal.org">cBioPortal</a>.
+      Presentation prediction by <a href="https://github.com/openvax/mhcflurry">MHCflurry</a>.
+      Survival analysis with <a href="https://github.com/CamDavidsonPilon/lifelines">lifelines</a>.
+      Every figure is sourced in <a href="https://github.com/isarinio22/moderna/blob/main/research/sources.md">research/sources.md</a>.
+    </p>
+    <p><a href="https://github.com/isarinio22/moderna"><strong>Code, data and sources on GitHub &rarr;</strong></a></p>
+  </div>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>

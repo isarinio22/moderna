@@ -37,9 +37,9 @@ MHCFLURRY_RELEASE := 2.3.0
 help:
 	@grep -E '^[a-z-]+:.*?## ' $(MAKEFILE_LIST) | sed 's/:.*## /\t/' | expand -t24
 
-all: $(P)/06_construct.json ## Rebuild every artifact from the real TCGA sample
+all: site/data/manifest.json figures/km_survival.png ## Rebuild every artifact: data, site, figures
 
-synthetic: $(P)/06_construct.json ## Rebuild everything offline from the committed fixture
+synthetic: site/data/manifest.json figures/km_survival.png ## Rebuild everything offline from the committed fixture
 
 setup: ## Create the virtualenv and install everything
 	$(PYTHON311) -m venv .venv
@@ -83,6 +83,24 @@ $(P)/05_ranked.json: $(I)/04_predictions.parquet $(S)/s5_rank.json \
 $(P)/06_construct.json: $(P)/05_ranked.json $(S)/s6_construct.json \
                         src/neoag/pipeline/s6_construct.py src/neoag/pipeline/construct/*.py
 	$(NEOAG) $(CFGARGS) construct
+
+# The website reads these directly; they are committed so GitHub Pages needs no build.
+site/data/manifest.json: $(P)/06_construct.json src/neoag/export.py src/neoag/evidence/*.py
+	$(NEOAG) $(CFGARGS) export
+
+figures/km_survival.png: site/data/manifest.json src/neoag/figures/*.py
+	$(NEOAG) $(CFGARGS) figures
+
+.PHONY: site evidence export
+export: site/data/manifest.json ## Write the website's JSON payloads
+figures: figures/km_survival.png ## Render the static PNG figures
+
+evidence: ## Reconstruct the trial data and print the validation table
+	@$(NEOAG) evidence
+
+site: site/data/manifest.json ## Serve the website locally
+	@echo "serving http://127.0.0.1:8000 — ctrl-c to stop"
+	@cd site && $(CURDIR)/$(PY) -m http.server 8000
 
 summary: $(P)/06_construct.json ## Print a summary of the last run
 	@$(NEOAG) $(CFGARGS) summary

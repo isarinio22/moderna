@@ -9,6 +9,10 @@ neoantigen therapy Moderna and Merck are developing with pembrolizumab (KEYTRUDA
 > This product is investigational and is **not approved by any regulator anywhere**.
 > See [DISCLAIMER.md](DISCLAIMER.md).
 
+![Recurrence-free survival in KEYNOTE-942: the vaccine group stays about 20 points higher at five years](figures/km_survival.png)
+
+**[Read the interactive explainer &rarr;](https://isarinio22.github.io/moderna/)**
+
 ---
 
 ## Explain it simply
@@ -59,6 +63,19 @@ publication date and data-cutoff date.
 
 ## Technical deep dive
 
+### Part 3 — the explainer
+
+A single scrollytelling page, built with vanilla JavaScript and inline SVG. No
+framework, no build step, nothing to rot. It reads the same JSON the pipeline
+exports, so the numbers on the page are the numbers the code produced, and every
+file is downloadable.
+
+Colours come from the Okabe-Ito palette, which stays distinguishable under every
+common form of colour vision deficiency — but vermillion and blue sit close in
+lightness, so the two trial arms also differ in line style and would still read
+on a monochrome printout. Every figure has a static PNG twin in
+[figures/](figures/), built by matplotlib from the same data.
+
 ### Part 1 — how a personalized vaccine is designed
 
 Six stages, each independently runnable, from a public tumour sample to a
@@ -105,13 +122,69 @@ clonality, no immunogenicity model, no self-proteome subtraction, no
 manufacturing constraints. Those are the difference between a teaching
 simulation and the real thing.
 
+On the real TCGA sample, 128 mutations narrow to 120 that can be placed on a
+verified protein, 4,509 candidate fragments, and 34 chosen targets — in 26
+seconds. Two results worth noting. The pipeline finds **NRAS Q61K**, one of the
+best-known melanoma driver mutations, but its mutated fragment binds HLA-A\*01:01
+essentially as well as the normal protein does (26 nM against 25), so a famous
+mutation turns out to be a mediocre target. And the HLA-A\*02:01 peptides it
+selects show the textbook anchor motif — leucine or valine at position 2, and a
+small hydrophobic residue at the end — which nothing in the code puts there.
+
+![Only 6 of 34 targets are shared across three different HLA types](figures/hla_panels.png)
+
+**Why it has to be personal.** Running the identical tumour against three sets of
+common HLA types, only **6 of 34** targets are shared by all three. About 80% of
+the vaccine changes with the patient's immune genetics.
+
+### Part 2 — what the evidence actually shows
+
+Patient-level recurrence-free survival for KEYNOTE-942, rebuilt from the trial's
+published summary table, refitted, and compared against what was published.
+
+The original plan was to digitise the Kaplan-Meier curves out of conference
+slides. That turned out to be unnecessary: the five-year figure publishes
+*cumulative censored* counts alongside patients-at-risk, and those two columns
+force the number of recurrences in every interval by arithmetic.
+
+```
+recurrences = at_risk[i] - at_risk[i+1] - censored_during_interval
+```
+
+No iteration, no curve fitting, no reading pixels off a picture. The derived
+counts sum to exactly the separately published totals of 28 and 23 — a
+constraint that was not chosen and cannot be tuned.
+
+| | reconstructed | published |
+|---|---:|---:|
+| hazard ratio | 0.506 | 0.510 |
+| 95% interval | 0.291–0.880 | 0.294–0.887 |
+| recurrences | 28 / 23 | 28 / 23 |
+| 5-year, vaccine arm | 69.2% | 68.8% |
+| 5-year, control arm | 49.1% | 49.1% |
+
+All ten landmark estimates land within half a percentage point. The only
+assumption left is where a recurrence falls inside a six-month window, and the
+hazard ratio moves by **0.0065** across every reasonable choice — so the
+conclusion does not rest on the assumption. `make evidence` prints the full
+discrepancy table, including the one quantity that drifts (the control arm's
+median, 46.5 months against 44.65).
+
+Two things the code refuses to do, enforced by tests rather than judgement:
+overall survival is never reconstructed, because 14 deaths in the whole trial
+would draw as two curves that look like a finding; and the three-year analysis is
+quoted only, because interpolating a curve between two real reconstructions would
+be fabrication.
+
 ## How to run
 
 ```bash
 make setup       # Python 3.11 virtualenv, dependencies, prediction models
-make all         # the real TCGA sample, end to end (~30 s once models are cached)
+make all         # everything: pipeline, site data, figures (~30 s once cached)
 make synthetic   # the same, fully offline, no model download
-make test        # 133 tests, offline, no model download
+make test        # 213 tests, offline, no model download
+make evidence    # reconstruct the trial and print the validation table
+make site        # serve the explainer at http://127.0.0.1:8000
 make summary     # what the last run selected
 ```
 
