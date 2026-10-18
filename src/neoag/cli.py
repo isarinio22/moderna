@@ -162,6 +162,60 @@ def cmd_run_all(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_evidence(args: argparse.Namespace) -> int:
+    """Reconstruct the trial data, refit it, and report the discrepancies."""
+    from neoag.evidence.derived import (
+        absolute_risk_difference,
+        number_needed_to_treat,
+        restricted_mean_difference,
+    )
+    from neoag.evidence.honesty import verdict
+    from neoag.evidence.published import AT_RISK_RFS_5YR, RFS_5YEAR
+    from neoag.evidence.reconstruct import placement_sensitivity, reconstruct
+    from neoag.evidence.refit import refit
+    from neoag.evidence.validate import validate
+
+    paths = Paths()
+    paths.ensure_dirs()
+    data = reconstruct(AT_RISK_RFS_5YR, RFS_5YEAR.events)
+    result = refit(data)
+    report = validate(result, RFS_5YEAR)
+
+    print(f"KEYNOTE-942 recurrence-free survival, data cutoff {RFS_5YEAR.cutoff}")
+    print(f"reconstructed {len(data)} patient records "
+          f"({int(data.event.sum())} recurrences) from the published at-risk table\n")
+    print(report.to_markdown())
+    print()
+
+    sensitivity = placement_sensitivity(AT_RISK_RFS_5YR, RFS_5YEAR.events)
+    print(f"event-placement sensitivity: hazard ratio varies by "
+          f"{sensitivity.spread:.4f} across all placement rules\n")
+
+    combo, control = result.fitter("combo"), result.fitter("control")
+    print(f"{'timepoint':>12}  {'extra event-free per 100':>26}  number needed to treat")
+    for t in (18.0, 24.0, 36.0, 48.0, 60.0):
+        rd = absolute_risk_difference(combo, control, t)
+        nnt = number_needed_to_treat(rd)
+        interval = f"[{rd.ci_low * 100:+.1f}, {rd.ci_high * 100:+.1f}]"
+        print(f"{t:>9.0f} mo  {rd.per_100:>8.1f} {interval:>17}  {nnt.display}")
+
+    rmst = restricted_mean_difference(combo, control, 60.0)
+    print(f"\nrestricted mean event-free time to 5 years: "
+          f"{rmst.treated_months:.1f} vs {rmst.control_months:.1f} months "
+          f"({rmst.difference_months:+.1f})")
+
+    out = paths.web / "evidence.md"
+    out.write_text(
+        f"# Reconstruction of KEYNOTE-942 recurrence-free survival\n\n"
+        f"Data cutoff {RFS_5YEAR.cutoff}. Source: {RFS_5YEAR.source}\n\n"
+        f"{report.to_markdown()}\n\n"
+        f"## Sensitivity to the one assumption\n\n{sensitivity.format_table()}\n\n"
+        f"## Bottom line\n\n{verdict()}\n"
+    )
+    print(f"\nwrote {out.relative_to(paths.root)}")
+    return 0 if report.passed else 1
+
+
 def cmd_config_stamp(args: argparse.Namespace) -> int:
     settings = _settings(args)
     stamp = {"stage": args.stage, "fingerprint": stage_fingerprint(settings, args.stage)}
@@ -243,6 +297,7 @@ def build_parser() -> argparse.ArgumentParser:
         ("construct", cmd_construct, "stage 6: assemble the conceptual mRNA"),
         ("run-all", cmd_run_all, "run every stage in order"),
         ("summary", cmd_summary, "print a summary of the last run"),
+        ("evidence", cmd_evidence, "reconstruct and validate the trial statistics"),
     ]:
         p = sub.add_parser(name, help=helptext)
         p.set_defaults(func=func)

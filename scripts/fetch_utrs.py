@@ -50,7 +50,7 @@ def get(path: str, **params: object) -> dict:
     for attempt in range(4):
         try:
             return json.loads(urllib.request.urlopen(request, timeout=45).read().decode())
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             if attempt == 3:
                 raise
             print(f"  retry after {exc}", file=sys.stderr)

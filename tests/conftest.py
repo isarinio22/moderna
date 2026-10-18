@@ -32,8 +32,13 @@ def _no_network(request, monkeypatch):
             "@pytest.mark.network, or use a fixture instead."
         )
 
-    monkeypatch.setattr(socket, "socket", blocked)
+    # Block the act of connecting rather than the socket class itself. Replacing
+    # the class breaks any module that subclasses it -- ssl.SSLSocket does, so
+    # patching socket.socket makes `import ssl` fail with a confusing TypeError.
+    monkeypatch.setattr(socket.socket, "connect", blocked)
+    monkeypatch.setattr(socket.socket, "connect_ex", blocked)
     monkeypatch.setattr(socket, "create_connection", blocked)
+    monkeypatch.setattr(socket, "getaddrinfo", blocked)
 
 
 @pytest.fixture
