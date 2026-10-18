@@ -59,15 +59,66 @@ publication date and data-cutoff date.
 
 ## Technical deep dive
 
-*(Parts 1–4 land in subsequent phases; this section fills in as they do.)*
+### Part 1 — how a personalized vaccine is designed
+
+Six stages, each independently runnable, from a public tumour sample to a
+labelled conceptual mRNA construct.
+
+| Stage | What it does |
+|---|---|
+| 1. fetch | Somatic mutations and gene expression for one de-identified TCGA melanoma sample, via the free cBioPortal API |
+| 2. annotate | Resolve each mutation to a protein position, fetch the real protein sequence, **and verify it** |
+| 3. peptides | Every 8–11-residue fragment spanning each mutation, paired with its normal counterpart |
+| 4. predict | MHC class I presentation for a panel of common HLA types, with MHCflurry |
+| 5. rank | Score on presentation, mutant-vs-normal advantage, expression and peptide quality; select up to 34 |
+| 6. construct | Assemble a labelled, conceptual mRNA: epitopes, linkers, codon-optimised coding sequence, UTR and poly-A blocks |
+
+**The part that actually matters is stage 2.** A mutation call says "valine 600
+became glutamate". To build peptides you need the protein sequence around
+position 600 — and if the sequence you fetch uses different numbering, position
+600 is a different residue, every peptide spanning it is wrong, and *nothing
+raises an error*. The output looks completely normal.
+
+This is not hypothetical. Ask the current Ensembl REST service for BRAF and you
+get an 806-residue protein with threonine at position 600; TCGA mutation calls
+use the 766-residue numbering where position 600 is valine. So this pipeline
+verifies the reference amino acid against the sequence before building any
+peptide, treats a disagreement as a rejection rather than a warning, aborts the
+run if disagreements exceed a quarter of the sample, and blocks the wrong
+service at the network layer so the mistake cannot be made by accident.
+
+Three other decisions worth calling out:
+
+- **Mutant and normal peptides are always compared on the same HLA type.**
+  Otherwise you measure the change of HLA type rather than the effect of the
+  mutation.
+- **At most one peptide per mutation and two per gene.** A single strongly
+  presented mutation yields dozens of overlapping fragments that all score well;
+  without caps the construct fills with 34 views of one target, and the vaccine
+  fails entirely if the tumour loses that one mutation.
+- **Everything discarded is kept and published,** with a machine-readable reason.
+  A pipeline that silently drops 40% of its input while appearing to work is the
+  most dangerous failure mode in this field.
+
+What this does *not* do: no matched normal sample, no variant phasing or
+clonality, no immunogenicity model, no self-proteome subtraction, no
+manufacturing constraints. Those are the difference between a teaching
+simulation and the real thing.
 
 ## How to run
 
 ```bash
-make setup     # Python 3.11 virtualenv + pinned dependencies
-make all       # rebuild every artifact: data, figures, site, LinkedIn assets
-make test      # full test suite, offline, no model download required
+make setup       # Python 3.11 virtualenv, dependencies, prediction models
+make all         # the real TCGA sample, end to end (~30 s once models are cached)
+make synthetic   # the same, fully offline, no model download
+make test        # 133 tests, offline, no model download
+make summary     # what the last run selected
 ```
+
+The responses needed for the default sample are committed, so `make all` works
+on a fresh clone with no network access once the models are present. Individual
+stages run on their own (`python -m neoag peptides`), and the build is
+incremental: changing a scoring weight re-ranks without re-running prediction.
 
 ## Sources and limitations
 

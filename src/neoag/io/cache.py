@@ -61,7 +61,12 @@ class CachedResponse:
 
     def to_json(self) -> str:
         return json.dumps(
-            {"status": self.status, "url": self.url, "body": self.body, "fetched_utc": self.fetched_utc},
+            {
+                "status": self.status,
+                "url": self.url,
+                "body": self.body,
+                "fetched_utc": self.fetched_utc,
+            },
             sort_keys=True,
             ensure_ascii=False,
         )

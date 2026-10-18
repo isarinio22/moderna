@@ -54,14 +54,14 @@ class UniProtClient:
                     f"{self.base_url}/stream", params={"query": query, "format": "fasta"}
                 )
                 out.update(parse_fasta(text))
-            except Exception:  # noqa: BLE001 - per-accession retry below
+            except Exception:
                 pass
             for acc in batch:
                 if acc in out:
                     continue
                 try:
                     out.update(parse_fasta(self.http.get_text(f"{self.base_url}/{acc}.fasta")))
-                except Exception:  # noqa: BLE001 - absence is recorded by the caller
+                except Exception:
                     continue
         return {k: v for k, v in out.items() if v}
 

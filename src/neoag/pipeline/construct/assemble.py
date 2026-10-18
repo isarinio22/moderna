@@ -37,8 +37,10 @@ def assemble(
     blocks: list[ConstructBlock] = []
     cursor = 0
 
-    def add(name: str, kind: str, sequence: str, note: str = "", aa: str | None = None,
-            epitope_id: str | None = None) -> None:
+    def add(
+        name: str, kind: str, sequence: str, note: str = "",
+        aa: str | None = None, epitope_id: str | None = None,
+    ) -> None:
         nonlocal cursor
         blocks.append(
             ConstructBlock(
@@ -51,7 +53,8 @@ def assemble(
     # The cap is a chemical modification, so it is a zero-length labelled block.
     add("5' cap", "cap", "", CAP_NOTE)
     add(utr5.name, "utr", utr5.sequence, utr5.note)
-    add("Kozak", "kozak", KOZAK, "Consensus sequence that helps the ribosome start in the right place.")
+    add("Kozak", "kozak", KOZAK,
+        "Consensus sequence that helps the ribosome start in the right place.")
 
     # Walk the coding sequence, labelling each epitope and linker in nucleotides.
     offset = 0
@@ -113,4 +116,4 @@ def summarize(full: str, cds_aa: str) -> dict[str, float | int]:
     }
 
 
-__all__ = ["assemble", "build_protein", "summarize", "to_fasta", "MODIFIED_BASE_NOTE"]
+__all__ = ["MODIFIED_BASE_NOTE", "assemble", "build_protein", "summarize", "to_fasta"]

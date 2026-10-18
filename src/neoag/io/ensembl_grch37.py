@@ -24,7 +24,7 @@ class Ensembl37Client:
                 f"{self.base_url}/sequence/id/{transcript_id}",
                 params={"type": "protein", "content-type": "application/json"},
             )
-        except Exception:  # noqa: BLE001 - fallback source; absence is recorded upstream
+        except Exception:
             return None
         seq = data.get("seq") if isinstance(data, dict) else None
         return seq.rstrip("*") if seq else None

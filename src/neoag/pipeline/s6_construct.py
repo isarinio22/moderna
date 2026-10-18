@@ -69,9 +69,12 @@ def run(
             counts={
                 "epitopes": len(order),
                 "junctions": len(junctions),
-                "junctions_with_strong_binder": sum(1 for j in junctions if j.n_strong_binders),
+                "junctions_with_strong": sum(1 for j in junctions if j.n_strong_binders),
                 "total_length_nt": int(stats["total_length_nt"]),
             },
-            notes=[MODIFIED_BASE_NOTE, "CONCEPTUAL CONSTRUCT -- not manufacturable, not validated."],
+            notes=[
+                MODIFIED_BASE_NOTE,
+                "CONCEPTUAL CONSTRUCT -- not manufacturable, not validated.",
+            ],
         ),
     )

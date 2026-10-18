@@ -55,7 +55,10 @@ def read_json(path: Path, model_cls: type[M]) -> M:
 def write_jsonl(path: Path, models: list[BaseModel], provenance: Provenance | None = None) -> None:
     """Write one model per line, for streams large enough that one blob is unwieldy."""
     lines = [
-        json.dumps(m.model_dump(mode="json"), sort_keys=True, ensure_ascii=False, separators=(",", ":"))
+        json.dumps(
+            m.model_dump(mode="json"), sort_keys=True,
+            ensure_ascii=False, separators=(",", ":"),
+        )
         for m in models
     ]
     _atomic_write_text(path, "\n".join(lines) + ("\n" if lines else ""))
@@ -65,7 +68,11 @@ def write_jsonl(path: Path, models: list[BaseModel], provenance: Provenance | No
 
 def read_jsonl(path: Path, model_cls: type[M]) -> list[M]:
     text = path.read_text(encoding="utf-8")
-    return [model_cls.model_validate(json.loads(line)) for line in text.splitlines() if line.strip()]
+    return [
+        model_cls.model_validate(json.loads(line))
+        for line in text.splitlines()
+        if line.strip()
+    ]
 
 
 def read_provenance(path: Path) -> Provenance | None:

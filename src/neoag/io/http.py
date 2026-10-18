@@ -123,7 +123,8 @@ class CachedHTTP:
 
         self.stats["misses"] += 1
         payload = self._fetch(method, url, params=params, body=body, as_text=as_text)
-        self.cache.put(key, CachedResponse(200, url, payload, _dt.datetime.now(_dt.UTC).isoformat()))
+        fetched = _dt.datetime.now(_dt.UTC).isoformat()
+        self.cache.put(key, CachedResponse(200, url, payload, fetched))
         return payload
 
     def _fetch(
@@ -158,7 +159,9 @@ class CachedHTTP:
                 f"{response.status_code} from {url}: {response.text[:400]}"
             )
 
-        raise ApiClientError(f"giving up on {method} {url} after {self.max_retries} attempts") from last_error
+        raise ApiClientError(
+            f"giving up on {method} {url} after {self.max_retries} attempts"
+        ) from last_error
 
     def _backoff(self, attempt: int, retry_after: float | None) -> None:
         self.stats["retries"] += 1

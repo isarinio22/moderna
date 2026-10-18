@@ -187,7 +187,10 @@ class AnnotationSet(_Frozen):
         A handful of mismatches is normal (stale annotations, isoform choice). A
         large share means the genome builds do not match and the run must abort.
         """
-        considered = [m for m in self.annotated + self.rejected if m.validation.status != "no_accession"]
+        considered = [
+            m for m in self.annotated + self.rejected
+            if m.validation.status != "no_accession"
+        ]
         if not considered:
             return 0.0
         return sum(1 for m in considered if m.validation.status == "mismatch") / len(considered)

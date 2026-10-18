@@ -67,7 +67,10 @@ def screen_junctions(
     reports: list[JunctionReport] = []
     for index, left_id, right_id in seams:
         entries = [
-            JunctionPeptide(peptide=p, best_allele=best[p][0], presentation_percentile=round(best[p][1], 4))
+            JunctionPeptide(
+                peptide=p, best_allele=best[p][0],
+                presentation_percentile=round(best[p][1], 4),
+            )
             for p in per_seam[index]
             if p in best
         ]
@@ -77,8 +80,12 @@ def screen_junctions(
                 junction_index=index,
                 left_epitope_id=left_id,
                 right_epitope_id=right_id,
-                worst_percentile=round(entries[0].presentation_percentile, 4) if entries else 100.0,
-                n_strong_binders=sum(1 for e in entries if e.presentation_percentile <= STRONG_PERCENTILE),
+                worst_percentile=(
+                    round(entries[0].presentation_percentile, 4) if entries else 100.0
+                ),
+                n_strong_binders=sum(
+                    1 for e in entries if e.presentation_percentile <= STRONG_PERCENTILE
+                ),
                 peptides=entries[:5],
             )
         )

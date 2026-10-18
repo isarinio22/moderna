@@ -19,7 +19,10 @@ from neoag.io.http import CachedHTTP
 
 BASE_URL = "https://www.cbioportal.org/api"
 #: TCGA open-access data carry no publication restrictions; acknowledgement required.
-CITATION = "cBioPortal (Cerami 2012; Gao 2013; de Bruijn 2023); data from the TCGA Research Network."
+CITATION = (
+    "cBioPortal (Cerami 2012; Gao 2013; de Bruijn 2023); "
+    "data from the TCGA Research Network."
+)
 
 
 def _chunks(items: list[Any], size: int) -> list[list[Any]]:

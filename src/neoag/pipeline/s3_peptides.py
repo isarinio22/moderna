@@ -101,7 +101,9 @@ def dedupe(pairs: list[PeptidePair]) -> list[PeptidePair]:
     return sorted(best.values(), key=lambda p: p.peptide_pair_id)
 
 
-def run(settings: Settings, annotation_set: AnnotationSet, proteome: ProteomeStore) -> list[PeptidePair]:
+def run(
+    settings: Settings, annotation_set: AnnotationSet, proteome: ProteomeStore
+) -> list[PeptidePair]:
     """Execute stage 3."""
     started = time.monotonic()
     positions = proximal_positions(annotation_set)

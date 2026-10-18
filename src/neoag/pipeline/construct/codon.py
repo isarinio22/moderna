@@ -97,7 +97,9 @@ def _try_dnachisel(aa_sequence: str, cfg: CodonCfg, seed: int) -> CodonResult | 
             sequence=start,
             constraints=[
                 EnforceTranslation(),
-                EnforceGCContent(mini=cfg.gc_target[0], maxi=cfg.gc_target[1], window=cfg.gc_window),
+                EnforceGCContent(
+                    mini=cfg.gc_target[0], maxi=cfg.gc_target[1], window=cfg.gc_window
+                ),
                 *[AvoidPattern(p) for p in cfg.avoid_patterns],
             ],
             objectives=[CodonOptimize(species=cfg.species, method=cfg.method)],
@@ -109,7 +111,7 @@ def _try_dnachisel(aa_sequence: str, cfg: CodonCfg, seed: int) -> CodonResult | 
         problem.resolve_constraints(final_check=False)
         problem.optimize()
         cds = str(problem.sequence)
-    except Exception:  # noqa: BLE001 - solver failure is expected; caller falls back
+    except Exception:
         return None
 
     if translate(cds) != aa_sequence:

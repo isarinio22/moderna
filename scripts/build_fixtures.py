@@ -57,7 +57,7 @@ def fetch(url: str, retries: int = 4) -> str:
             return urllib.request.urlopen(
                 urllib.request.Request(url, headers=UA), timeout=45
             ).read().decode()
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             if attempt == retries - 1:
                 raise
             print(f"  retry {attempt + 1} after {exc}", file=sys.stderr)
@@ -74,7 +74,11 @@ def fetch_entry(accession: str) -> tuple[str, int | None]:
     data = json.loads(fetch(url))
     sequence = data["sequence"]["value"]
     gene_id = next(
-        (int(x["id"]) for x in data.get("uniProtKBCrossReferences", []) if x["database"] == "GeneID"),
+        (
+            int(x["id"])
+            for x in data.get("uniProtKBCrossReferences", [])
+            if x["database"] == "GeneID"
+        ),
         None,
     )
     return sequence, gene_id

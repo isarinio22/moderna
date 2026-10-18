@@ -23,7 +23,14 @@ from neoag.io.ensembl_grch37 import Ensembl37Client
 from neoag.io.genome_nexus import GenomeNexusClient
 from neoag.io.http import CachedHTTP
 from neoag.io.uniprot import UniProtClient, parse_fasta
-from neoag.models import AnnotationSet, MRNAConstruct, MutationSet, PeptidePair, ProteomeStore, RankingResult
+from neoag.models import (
+    AnnotationSet,
+    MRNAConstruct,
+    MutationSet,
+    PeptidePair,
+    ProteomeStore,
+    RankingResult,
+)
 from neoag.paths import Paths
 from neoag.pipeline import s1_fetch, s2_annotate, s3_peptides, s4_predict, s5_rank, s6_construct
 from neoag.pipeline.construct.assemble import to_fasta
@@ -81,8 +88,9 @@ def cmd_annotate(args: argparse.Namespace) -> int:
     write_json(paths.proteome, proteome)
     mismatches = sum(1 for m in annotation_set.rejected if m.validation.status == "mismatch")
     print(
-        f"stage 2: {len(annotation_set.annotated)} validated, {len(annotation_set.rejected)} rejected "
-        f"({mismatches} reference-amino-acid mismatches) -> {paths.annotated.relative_to(paths.root)}"
+        f"stage 2: {len(annotation_set.annotated)} validated, "
+        f"{len(annotation_set.rejected)} rejected ({mismatches} reference-amino-acid "
+        f"mismatches) -> {paths.annotated.relative_to(paths.root)}"
     )
     return 0
 
@@ -123,7 +131,8 @@ def cmd_rank(args: argparse.Namespace) -> int:
     write_json(paths.ranked, result, result.provenance)
     print(
         f"stage 5: {len(result.selected_ids)} selected from {len(result.epitopes)} candidates "
-        f"(panel {args.panel or settings.hla.primary_panel}) -> {paths.ranked.relative_to(paths.root)}"
+        f"(panel {args.panel or settings.hla.primary_panel}) "
+        f"-> {paths.ranked.relative_to(paths.root)}"
     )
     return 0
 
@@ -161,6 +170,36 @@ def cmd_config_stamp(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_config_stamps(args: argparse.Namespace) -> int:
+    """Write a fingerprint file per stage, touching only those that changed.
+
+    Make decides what to rebuild from file timestamps, so a stamp must be
+    rewritten when and only when its stage's configuration actually changed.
+    Writing unconditionally would rebuild everything on every invocation;
+    relying on the config file's own timestamp is worse, because restoring a
+    file from backup or checking out an older revision moves its timestamp
+    *backwards* and make then skips a rebuild that is genuinely needed.
+    """
+    from neoag.config import STAGE_CONFIG_KEYS
+
+    settings = _settings(args)
+    outdir = Path(args.outdir)
+    outdir.mkdir(parents=True, exist_ok=True)
+    changed = []
+    for stage in STAGE_CONFIG_KEYS:
+        target = outdir / f"{stage}.json"
+        content = json.dumps(
+            {"stage": stage, "fingerprint": stage_fingerprint(settings, stage)},
+            indent=2, sort_keys=True,
+        ) + "\n"
+        if not target.exists() or target.read_text() != content:
+            target.write_text(content)
+            changed.append(stage)
+    if changed and not args.quiet:
+        print(f"config changed for: {', '.join(changed)}", file=sys.stderr)
+    return 0
+
+
 def cmd_summary(args: argparse.Namespace) -> int:
     """Print a human-readable summary of the most recent run."""
     paths = Paths()
@@ -171,7 +210,8 @@ def cmd_summary(args: argparse.Namespace) -> int:
     print(f"sample          {ranking.sample_id}")
     print(f"origin          {ranking.provenance.origin}")
     print(f"HLA alleles     {', '.join(ranking.hla_alleles)}")
-    print(f"validated muts  {len(annotation_set.annotated)} ({len(annotation_set.rejected)} rejected)")
+    rejected = len(annotation_set.rejected)
+    print(f"validated muts  {len(annotation_set.annotated)} ({rejected} rejected)")
     print(f"candidates      {len(ranking.epitopes)}")
     print(f"selected        {len(selected)}")
     print(f"construct       {construct.total_length_nt} nt, GC {construct.gc_content:.1%}")
@@ -180,7 +220,8 @@ def cmd_summary(args: argparse.Namespace) -> int:
     for epitope in selected[:10]:
         print(
             f"{epitope.rank:>4}  {epitope.gene:<10} {epitope.mut_peptide:<12} "
-            f"{epitope.best_allele:<13} {epitope.mut_affinity_nm:>9.1f}  {epitope.components.total:>6.3f}"
+            f"{epitope.best_allele:<13} {epitope.mut_affinity_nm:>9.1f}  "
+            f"{epitope.components.total:>6.3f}"
         )
     return 0
 
@@ -210,10 +251,15 @@ def build_parser() -> argparse.ArgumentParser:
     p_rank.add_argument("--panel", default=None, help="HLA panel name (default: primary)")
     p_rank.set_defaults(func=cmd_rank)
 
-    p_stamp = sub.add_parser("config-stamp", help="write a per-stage config fingerprint")
+    p_stamp = sub.add_parser("config-stamp", help="write one stage's config fingerprint")
     p_stamp.add_argument("--stage", required=True)
     p_stamp.add_argument("--out", required=True)
     p_stamp.set_defaults(func=cmd_config_stamp)
+
+    p_stamps = sub.add_parser("config-stamps", help="write all stage fingerprints")
+    p_stamps.add_argument("--outdir", required=True)
+    p_stamps.add_argument("--quiet", action="store_true")
+    p_stamps.set_defaults(func=cmd_config_stamps)
 
     return parser
 

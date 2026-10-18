@@ -8,4 +8,4 @@ DISCLAIMER.md at the repository root.
 __version__ = "0.1.0"
 SCHEMA_VERSION = "1.0.0"
 
-__all__ = ["__version__", "SCHEMA_VERSION"]
+__all__ = ["SCHEMA_VERSION", "__version__"]

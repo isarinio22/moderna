@@ -21,7 +21,8 @@ def canonical_json(obj: Any) -> str:
 
 def digest(obj: Any) -> str:
     """Return a stable hex digest of any JSON-serialisable object."""
-    return hashlib.blake2b(canonical_json(obj).encode("utf-8"), digest_size=_DIGEST_SIZE).hexdigest()
+    payload = canonical_json(obj).encode("utf-8")
+    return hashlib.blake2b(payload, digest_size=_DIGEST_SIZE).hexdigest()
 
 
 def digest_text(text: str) -> str:

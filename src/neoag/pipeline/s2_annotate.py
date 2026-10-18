@@ -127,7 +127,8 @@ def run(
     for mutation in mutation_set.mutations:
         if mutation.mutation_id not in parsed:
             continue
-        if mutation.uniprot_acc and not (picks.get(mutation.mutation_id) or TranscriptPick(None, None, None, None, None, None)).uniprot_acc:
+        existing = picks.get(mutation.mutation_id)
+        if mutation.uniprot_acc and not (existing and existing.uniprot_acc):
             ref_aa, pos, alt = parsed[mutation.mutation_id]
             picks[mutation.mutation_id] = TranscriptPick(
                 None, mutation.uniprot_acc, None, ref_aa, alt, pos

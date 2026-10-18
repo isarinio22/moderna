@@ -41,7 +41,7 @@ class MHCflurryPredictor:
             ) from exc
         try:
             self._predictor = Class1PresentationPredictor.load()
-        except Exception as exc:  # noqa: BLE001 - surfaced with an actionable hint
+        except Exception as exc:
             raise PredictorUnavailableError(
                 f"could not load MHCflurry models ({exc}). Download them with:\n  {FETCH_HINT}"
             ) from exc

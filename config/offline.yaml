@@ -1,0 +1,10 @@
+# Overlay on default.yaml: run the REAL TCGA sample with no network access.
+#
+# The responses needed for the default sample are committed under
+# data/fixtures/cache_seed/ and copied into the cache on first run, so a fresh
+# clone reproduces the real result offline. Only the MHCflurry models still need
+# downloading once (`make models`).
+#
+#   .venv/bin/python -m neoag -c config/default.yaml -c config/offline.yaml run-all
+run:
+  offline_mode: offline

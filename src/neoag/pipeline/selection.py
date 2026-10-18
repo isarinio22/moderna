@@ -21,8 +21,13 @@ def stable_key(epitope: ScoredEpitope) -> tuple:
     """Total ordering with explicit tie-breaks.
 
     Floating-point reduction order can differ run to run, so scores are rounded
-    before comparison and ties are broken by stable identifiers. Without this the
-    selected set could change between runs on identical input.
+    before comparison and ties are broken by stable identifiers.
+
+    The key must be a *total* order. Ending it at the peptide sequence is not
+    enough: two candidates from different mutations can share a gene, position,
+    sequence and allele, and then sorting falls back to input order, which
+    depends on how the data happened to arrive. The globally unique pair id is
+    the final tie-break that makes the result independent of input ordering.
     """
     return (
         -round(epitope.components.total, ROUND),
@@ -31,6 +36,8 @@ def stable_key(epitope: ScoredEpitope) -> tuple:
         epitope.length,
         epitope.mut_peptide,
         epitope.best_allele,
+        epitope.mutation_id,
+        epitope.peptide_pair_id,
     )
 
 
@@ -62,7 +69,9 @@ def select(epitopes: list[ScoredEpitope], cfg: SelectionCfg) -> list[ScoredEpito
             per_gene[epitope.gene] = per_gene.get(epitope.gene, 0) + 1
 
         out.append(
-            epitope.model_copy(update={"rank": index, "selected": selected, "exclusion_reason": reason})
+            epitope.model_copy(
+                update={"rank": index, "selected": selected, "exclusion_reason": reason}
+            )
         )
 
     return out
