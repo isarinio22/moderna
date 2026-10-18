@@ -37,6 +37,19 @@ from neoag.pipeline.construct.assemble import to_fasta
 from neoag.pipeline.predictors.base import load_predictor
 
 
+def _display(path: Path, root: Path) -> str:
+    """Path relative to the repository when it is inside it, absolute otherwise.
+
+    Output directories can legitimately sit outside the repo -- `make
+    figures-check` renders into a temporary directory -- and relative_to raises
+    rather than falling back.
+    """
+    try:
+        return str(path.relative_to(root))
+    except ValueError:
+        return str(path)
+
+
 def _settings(args: argparse.Namespace) -> Settings:
     configs = [Path(c) for c in args.config]
     settings = load_settings(configs)
@@ -197,7 +210,7 @@ def cmd_export(args: argparse.Namespace) -> int:
     total = sum(sizes.values())
     for name, size in sorted(sizes.items()):
         print(f"  {name:<18} {size / 1024:>8.1f} KB")
-    print(f"  {'total':<18} {total / 1024:>8.1f} KB -> {outdir.relative_to(paths.root)}")
+    print(f"  {'total':<18} {total / 1024:>8.1f} KB -> {_display(outdir, paths.root)}")
     return 0
 
 
@@ -211,7 +224,7 @@ def cmd_figures(args: argparse.Namespace) -> int:
     written = build_all(data_dir, outdir, args.only)
     for name, path in sorted(written.items()):
         print(f"  {name:<22} {path.stat().st_size / 1024:>7.1f} KB  {path.name}")
-    print(f"  {len(written)} figures -> {outdir.relative_to(paths.root)}")
+    print(f"  {len(written)} figures -> {_display(outdir, paths.root)}")
     return 0
 
 

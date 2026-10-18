@@ -31,7 +31,7 @@ export MPLBACKEND := Agg
 export MHCFLURRY_DOWNLOADS_DIR := $(CURDIR)/data/cache/mhcflurry
 MHCFLURRY_RELEASE := 2.3.0
 
-.PHONY: all synthetic setup models test test-network test-models lint typecheck \
+.PHONY: all synthetic setup models test test-network test-models lint typecheck figures-check \
         clean clean-interim distclean summary help
 
 help:
@@ -123,6 +123,13 @@ test-network: ## Contract tests against the live public APIs
 
 test-models: ## Tests that need the MHCflurry models
 	$(PY) -m pytest -q -m models
+
+figures-check: ## Verify a figure rebuild is byte-identical to what is committed
+	@tmp=$$(mktemp -d); $(NEOAG) $(CFGARGS) figures --outdir $$tmp >/dev/null; \
+	 ok=1; for f in figures/*.png; do \
+	   cmp -s "$$f" "$$tmp/$$(basename $$f)" || { echo "CHANGED: $$f"; ok=0; }; \
+	 done; rm -rf $$tmp; \
+	 [ $$ok -eq 1 ] && echo "all figures reproduce byte-for-byte"
 
 lint:
 	.venv/bin/ruff check src tests scripts

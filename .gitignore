@@ -13,13 +13,15 @@ data/interim/
 data/processed/
 data/source_pdfs/
 
-# Generated assets
+# Scratch output (the evidence report, rebuilt by `make evidence`)
 out/
-figures/*.png
-figures/*.svg
-figures/*.pdf
 
-# Video is NOT byte-reproducible (ffmpeg embeds encoder metadata) -> build on demand
+# figures/ and linkedin/ ARE tracked. They are deterministic build artifacts,
+# and the README and GitHub Pages both serve them directly, so they have to be
+# in the repository. `make figures-check` asserts a rebuild is byte-identical.
+
+# Video is the exception: ffmpeg embeds encoder metadata that cannot be fully
+# suppressed, so it is not byte-reproducible and would keep the tree dirty.
 linkedin/*.mp4
 linkedin/*.gif
 
