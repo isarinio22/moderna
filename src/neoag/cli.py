@@ -215,6 +215,31 @@ def cmd_figures(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_carousel(args: argparse.Namespace) -> int:
+    """Build the LinkedIn carousel PDF and its slide PNGs."""
+    from neoag.figures.carousel import build, build_pngs
+
+    paths = Paths()
+    data_dir = Path(args.data) if args.data else paths.root / "site" / "data"
+    outdir = paths.root / "linkedin"
+    pdf = build(data_dir, outdir / "carousel.pdf")
+    pngs = build_pngs(data_dir, outdir / "slides")
+    print(f"  carousel.pdf   {pdf.stat().st_size / 1024:>7.1f} KB  {len(pngs)} slides")
+    print(f"  slides/        {len(pngs)} PNGs at 1080x1350")
+    return 0
+
+
+def cmd_animation(args: argparse.Namespace) -> int:
+    """Render the pipeline animation to MP4."""
+    from neoag.figures.animation import build
+
+    paths = Paths()
+    data_dir = Path(args.data) if args.data else paths.root / "site" / "data"
+    out = build(data_dir, paths.root / "linkedin" / "pipeline.mp4")
+    print(f"  pipeline.mp4   {out.stat().st_size / 1024 / 1024:>7.1f} MB")
+    return 0
+
+
 def cmd_evidence(args: argparse.Namespace) -> int:
     """Reconstruct the trial data, refit it, and report the discrepancies."""
     from neoag.evidence.derived import (
@@ -358,6 +383,14 @@ def build_parser() -> argparse.ArgumentParser:
     p_rank = sub.add_parser("rank", help="stage 5: score, rank and select")
     p_rank.add_argument("--panel", default=None, help="HLA panel name (default: primary)")
     p_rank.set_defaults(func=cmd_rank)
+
+    p_car = sub.add_parser("carousel", help="build the LinkedIn carousel")
+    p_car.add_argument("--data", default=None)
+    p_car.set_defaults(func=cmd_carousel)
+
+    p_anim = sub.add_parser("animation", help="render the pipeline animation to MP4")
+    p_anim.add_argument("--data", default=None)
+    p_anim.set_defaults(func=cmd_animation)
 
     p_figs = sub.add_parser("figures", help="render static PNG figures")
     p_figs.add_argument("--data", default=None)

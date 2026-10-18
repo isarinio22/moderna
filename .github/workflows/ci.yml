@@ -1,0 +1,104 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Tests and full rebuild
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      # Deliberately without the `predict` extra. MHCflurry pulls PyTorch, which
+      # is ~555 MB, and the entire test suite plus a full pipeline rebuild runs
+      # on the deterministic stub predictor instead. The real models are
+      # exercised by the scheduled contracts workflow.
+      - name: Install
+        run: pip install -e ".[dev,construct]"
+
+      - name: Lint
+        run: ruff check src tests scripts
+
+      - name: Tests
+        run: pytest -q
+
+      - name: Full rebuild, offline
+        run: |
+          make clean-interim
+          make synthetic
+          python -m neoag -c config/default.yaml -c config/synthetic.yaml summary
+
+      - name: Figures and carousel build
+        run: |
+          python -m neoag figures
+          python -m neoag carousel
+
+      - name: Reconstruction reproduces the published trial result
+        run: python -m neoag evidence
+
+  committed-data:
+    name: Published site data is a real run
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      # Guards against committing a demonstration run to the live site: the
+      # stub predictor's scores are meaningless and must never be published.
+      - name: Check provenance of site/data
+        run: |
+          python - <<'PY'
+          import json, sys
+          m = json.load(open("site/data/manifest.json"))
+          problems = []
+          if not m["sample"]["is_real_tumour_data"]:
+              problems.append(f"sample origin is {m['sample']['origin']!r}, not real tumour data")
+          if not m["predictor"]["is_real_prediction"]:
+              problems.append(f"predictions came from {m['predictor']['name']!r}")
+          if problems:
+              print("site/data was built from a demonstration run:")
+              for p in problems:
+                  print(" -", p)
+              print("Rebuild with `make all` before committing.")
+              sys.exit(1)
+          print(f"site/data built from {m['sample']['id']} using {m['predictor']['name']}")
+          PY
+
+  pages:
+    name: Deploy the explainer
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    needs: [test, committed-data]
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      # The site is static and its data is committed, so there is nothing to
+      # build: publish the directory as it stands.
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+      - id: deploy
+        uses: actions/deploy-pages@v4

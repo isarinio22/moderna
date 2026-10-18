@@ -76,6 +76,21 @@ lightness, so the two trial arms also differ in line style and would still read
 on a monochrome printout. Every figure has a static PNG twin in
 [figures/](figures/), built by matplotlib from the same data.
 
+### Part 4 — the LinkedIn assets
+
+A nine-slide carousel at 1080×1350 (`make carousel`), a seventeen-second
+animation of the pipeline (`make video`), and a post draft. All three are built
+from the same exported JSON, so they cannot drift from the analysis.
+
+A test lints every word this project ships — README, disclaimer, site, slides,
+sources and post — against a list of phrases that would overstate the evidence.
+Another asserts the post stays under LinkedIn's limit and that the one-sided
+p-value never appears without its conventional two-sided counterpart.
+
+The video is deliberately excluded from `make all` and from git: ffmpeg embeds
+encoder metadata that cannot be fully suppressed, so it is not byte-reproducible
+and would make the working tree permanently dirty.
+
 ### Part 1 — how a personalized vaccine is designed
 
 Six stages, each independently runnable, from a public tumour sample to a
@@ -182,11 +197,18 @@ be fabrication.
 make setup       # Python 3.11 virtualenv, dependencies, prediction models
 make all         # everything: pipeline, site data, figures (~30 s once cached)
 make synthetic   # the same, fully offline, no model download
-make test        # 213 tests, offline, no model download
+make test        # 233 tests, offline, no model download
 make evidence    # reconstruct the trial and print the validation table
 make site        # serve the explainer at http://127.0.0.1:8000
 make summary     # what the last run selected
+make carousel    # the LinkedIn slide deck
+make video       # the pipeline animation (needs ffmpeg)
 ```
+
+The whole test suite and a full pipeline rebuild run **without PyTorch or the
+prediction models installed**, on a deterministic stub predictor — which is what
+keeps CI to a couple of minutes. The real models are exercised by a scheduled
+workflow that also checks the four public APIs for upstream drift.
 
 The responses needed for the default sample are committed, so `make all` works
 on a fresh clone with no network access once the models are present. Individual

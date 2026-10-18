@@ -37,7 +37,7 @@ MHCFLURRY_RELEASE := 2.3.0
 help:
 	@grep -E '^[a-z-]+:.*?## ' $(MAKEFILE_LIST) | sed 's/:.*## /\t/' | expand -t24
 
-all: site/data/manifest.json figures/km_survival.png ## Rebuild every artifact: data, site, figures
+all: site/data/manifest.json figures/km_survival.png linkedin/carousel.pdf ## Rebuild every artifact
 
 synthetic: site/data/manifest.json figures/km_survival.png ## Rebuild everything offline from the committed fixture
 
@@ -91,9 +91,18 @@ site/data/manifest.json: $(P)/06_construct.json src/neoag/export.py src/neoag/ev
 figures/km_survival.png: site/data/manifest.json src/neoag/figures/*.py
 	$(NEOAG) $(CFGARGS) figures
 
-.PHONY: site evidence export
+linkedin/carousel.pdf: site/data/manifest.json src/neoag/figures/carousel.py
+	$(NEOAG) $(CFGARGS) carousel
+
+# Video is excluded from `make all`: ffmpeg embeds encoder metadata that cannot
+# be fully suppressed, so the output is not byte-reproducible and is gitignored.
+video: site/data/manifest.json ## Render the pipeline animation (needs ffmpeg)
+	$(NEOAG) $(CFGARGS) animation
+
+.PHONY: site evidence export video carousel
 export: site/data/manifest.json ## Write the website's JSON payloads
 figures: figures/km_survival.png ## Render the static PNG figures
+carousel: linkedin/carousel.pdf ## Build the LinkedIn carousel PDF and slide PNGs
 
 evidence: ## Reconstruct the trial data and print the validation table
 	@$(NEOAG) evidence
